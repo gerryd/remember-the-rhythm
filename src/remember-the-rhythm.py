@@ -31,11 +31,8 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.playback_time = self.settings.get_uint(KEY_PLAYBACK_TIME)
         self.browser_values_list = self.settings.get_value(KEY_BROWSER_VALUES)
         self.source = None
-        print "init- playback_time: " + str(self.playback_time)
-        print "elapsed_changed - location: " + str(self.location)
 
     def do_activate(self):
-        print "do_activate"
         self.shell = self.object
         self.library = self.shell.props.library_source
         self.shell_player = self.shell.props.shell_player
@@ -52,7 +49,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.first_run = True
 
     def load_complete(self, *args, **kwargs):
-        print "load_complete"
         if self.location:
             entry = self.db.entry_lookup_by_location(self.location)
             if self.playlist:
@@ -77,8 +73,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 self.settings.set_string('playlist', '')
 
     def playing_changed(self, player, playing, data=None):
-        print "playing_changed - playback_time: " + str(self.playback_time)
-        print "playing_changed - location: " + str(self.location)
         if self.first_run:
             self.on_first_run()
             GObject.idle_add(self.init_source)
@@ -98,8 +92,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             return
         try:
             self.playback_time = self.shell_player.get_playing_time()[1]
-            print "elapsed_changed - playback_time: " + str(self.playback_time)
-            print "elapsed_changed - location: " + str(self.location)
         except:
             pass
 
@@ -120,7 +112,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.settings.set_value(KEY_BROWSER_VALUES, self.browser_values_list)
 
     def init_source(self):
-        print "init_source - self.playback_time: " + str(self.playback_time)
         if self.source:
             views = self.source.get_property_views()
             for i, view in enumerate(views):
@@ -129,7 +120,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                     view.set_selection(value)
             self.shell.props.display_page_tree.select(self.source)
             self.shell_player.jump_to_current()
-            #self.shell_player.set_playing_time(self.playback_time)
 
     def save_rhythm(self, pb_time=None):
         if self.location:
@@ -137,4 +127,5 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.settings.set_uint(KEY_PLAYBACK_TIME, pb_time)
             self.settings.set_string(KEY_LOCATION, self.location)
         GObject.idle_add(self.get_source_data)
+
 
