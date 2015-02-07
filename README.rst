@@ -4,11 +4,19 @@ Remember The Rhythm
 
 A plugin for rhythbox to remember last playing song and playback time.
 
+under development
+
+probably will include the ability to 
+ 
+ - start up paused if the music was paused when quitten
+ - start up playing if the music was playing
+ - remember the playlist/source that the music was playing
+
 -------------
 Requirements
 -------------
 
-Rhythmbox 2.90 or above
+Rhythmbox 3 or above
 
 -------------
 Installation
@@ -18,11 +26,7 @@ Installation
 Ubuntu Repository
 ~~~~~~~~~~~~~~~~~~
 
-::
-
-    sudo add-apt-repository ppa:loneowais/ppa
-    sudo apt-get update
-    sudo apt-get install remember-the-rhythm
+TBA
 
 
 From Source
