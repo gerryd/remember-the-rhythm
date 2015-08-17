@@ -1,0 +1,9 @@
+[Plugin]
+Loader=python3
+Module=remember-the-rhythm
+IAge=2
+Name=Remember the Rhythm
+Description=Remembers last playing song + playback time and resumes on next start
+Authors=fossfreedom <foss.freedom@gmail.com> Owais Lone <hello@owaislone.org>
+Copyright=Copyright © 2011 Owais Lone 2015 fossfreedom
+Website=https://github.com/fossfreedom/remember-the-rhythm

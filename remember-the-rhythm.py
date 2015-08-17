@@ -23,7 +23,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
     first_run = False
 
     def __init__(self):
-        print "__init__"
+        print("__init__")
         GObject.Object.__init__(self)
         self.settings = Gio.Settings.new(GSETTINGS_KEY)
         self.location = self.settings.get_string(KEY_LOCATION)
