@@ -5,6 +5,7 @@ from gi.repository import GObject
 from gi.repository import Peas
 from gi.repository import RB
 from gi.repository import Gio
+from gi.repository import GLib
 from gi.repository.GLib import Variant
 
 
@@ -13,7 +14,7 @@ KEY_PLAYBACK_TIME = 'playback-time'
 KEY_LOCATION = 'last-entry-location'
 KEY_PLAYLIST = 'playlist'
 KEY_BROWSER_VALUES = 'browser-values'
-
+KEY_PLAY_STATE = 'play-state'
 
 class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
@@ -30,6 +31,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.playlist = self.settings.get_string(KEY_PLAYLIST)
         self.playback_time = self.settings.get_uint(KEY_PLAYBACK_TIME)
         self.browser_values_list = self.settings.get_value(KEY_BROWSER_VALUES)
+        self.play_state = self.settings.get_boolean(KEY_PLAY_STATE)
         self.source = None
 
     def do_activate(self):
@@ -45,7 +47,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.shell_player.connect('elapsed-changed', self.elapsed_changed)
 
     def do_deactivate(self):
-        self.save_rhythm()
+        #self.save_rhythm()
         self.first_run = True
 
     def try_load(self, *args, **kwargs):
@@ -55,6 +57,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.load_complete()
 
     def load_complete(self, *args, **kwargs):
+        print ("DEBUG - load_complete")
         if self.location:
             entry = self.db.entry_lookup_by_location(self.location)
             if self.playlist:
@@ -67,7 +70,24 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 self.source = self.shell.guess_source_for_uri(self.location)
             self.shell_player.set_playing_source(self.source)
             self.shell_player.set_selected_source(self.source)
+
+            #self.shell_player.set_mute(False)
             self.shell_player.play_entry(entry, self.source)
+
+            time = self.playback_time
+
+            def pause(time):
+                print (self.shell_player.set_playing_time(time))
+                self.shell_player.pause()
+                #self.shell_player.set_mute(True)
+
+                return False
+
+            if not self.play_state:
+                GLib.timeout_add_seconds(1, pause, time)
+            #else:
+                #self.shell_player.set_mute(False)
+
             self.first_run = True
 
     def playing_source_changed(self, player, source, data=None):
@@ -79,17 +99,24 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 self.settings.set_string('playlist', '')
 
     def playing_changed(self, player, playing, data=None):
+
+        print ("DEBUG-playing_changed")
         if self.first_run:
             self.on_first_run()
             GObject.idle_add(self.init_source)
             return
 
-        try:
-            entry = self.shell_player.get_playing_entry()
+        entry = self.shell_player.get_playing_entry()
+
+        if entry:
+            success, self.play_state = self.shell_player.get_playing()
+
             self.location = entry.get_string(RB.RhythmDBPropType.LOCATION)
-            GObject.idle_add(self.save_rhythm, 0)
-        except:
-            return
+        else:
+            self.play_state = False
+            self.location = ""
+
+        GObject.idle_add(self.save_rhythm, 0)
 
 
     def elapsed_changed(self, player, entry, data=None):
@@ -97,7 +124,18 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.on_first_run()
             return
         try:
+            if self.playback_time:
+                save_time = True
+            else:
+                save_time = False
+
+            if save_time and self.playback_time == self.shell_player.get_playing_time()[1]:
+                save_time = False
+
             self.playback_time = self.shell_player.get_playing_time()[1]
+
+            GObject.idle_add(self.save_rhythm)
+
         except:
             pass
 
@@ -129,9 +167,9 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
     def save_rhythm(self, pb_time=None):
         if self.location:
-            pb_time = pb_time == None and self.playback_time or pb_time
+            pb_time = pb_time == None and self.playback_time or pb_time==None
             self.settings.set_uint(KEY_PLAYBACK_TIME, pb_time)
             self.settings.set_string(KEY_LOCATION, self.location)
+        self.settings.set_boolean(KEY_PLAY_STATE, self.play_state)
+
         GObject.idle_add(self.get_source_data)
-
-

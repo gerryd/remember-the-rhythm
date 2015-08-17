@@ -21,5 +21,10 @@
       <summary>Last playlist</summary>
       <description>Name of the last playing playlist if any.</description>
     </key>
+    <key type="b" name="play-state">
+      <default>false</default>
+      <summary>Playing state</summary>
+      <description>Whether the entry was playing or not</description>
+    </key>
   </schema>
 </schemalist>
