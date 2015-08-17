@@ -41,12 +41,18 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.backend_player = self.shell_player.props.player
         self.shell_player.connect('playing-changed', self.playing_changed)
         self.shell_player.connect('playing-source-changed', self.playing_source_changed)
-        self.shell.props.db.connect('load-complete', self.load_complete)
+        self.shell.props.db.connect('load-complete', self.try_load)
         self.shell_player.connect('elapsed-changed', self.elapsed_changed)
 
     def do_deactivate(self):
         self.save_rhythm()
         self.first_run = True
+
+    def try_load(self, *args, **kwargs):
+        if len(self.playlist_manager.get_playlists()) == 0:
+            GObject.idle_add(self.load_complete)
+        else:
+            self.load_complete()
 
     def load_complete(self, *args, **kwargs):
         if self.location:
