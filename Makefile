@@ -5,7 +5,7 @@ build:
 
 install:
 	mkdir -p $(PLUGIN_PATH)
-	cp src/* $(PLUGIN_PATH) -Rf
+	cp remember* $(PLUGIN_PATH)
 	cp schemas/org.gnome.rhythmbox.plugins.remember-the-rhythm.gschema.xml $(SCHEMA_PATH)
 	glib-compile-schemas $(SCHEMA_PATH)
 	
