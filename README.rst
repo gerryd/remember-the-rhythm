@@ -9,6 +9,7 @@ Fork - these are the improvements:
  - python3 - for Rhythmbox 3.0 and later
  - start up paused if the music was paused when rhythmbox was shutdown
  - start up playing if the music was playing
+ - configurable startup options via plugin-preferences
 
 under development
 

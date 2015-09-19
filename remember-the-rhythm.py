@@ -200,6 +200,7 @@ class RememberPreferences(GObject.Object, PeasGtk.Configurable):
         """
         GObject.Object.__init__(self)
         self.settings = Gio.Settings.new(GSETTINGS_KEY)
+        self._first_run = True
 
     def do_create_configure_widget(self):
         """
@@ -207,8 +208,6 @@ class RememberPreferences(GObject.Object, PeasGtk.Configurable):
         """
         print("DEBUG - create_display_contents")
         # create the ui
-        self._first_run = True
-
         builder = Gtk.Builder()
         builder.add_from_file(rb.find_plugin_file(self,
                                                   'ui/remember_preferences.ui'))
