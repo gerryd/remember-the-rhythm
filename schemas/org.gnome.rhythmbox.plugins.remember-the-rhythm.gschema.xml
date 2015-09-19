@@ -26,5 +26,15 @@
       <summary>Playing state</summary>
       <description>Whether the entry was playing or not</description>
     </key>
+    <key type="u" name="startup-state">
+      <default>1</default>
+      <summary>startup state</summary>
+      <description>1 play-pause, 2 pause, 3 play</description>
+    </key>
+    <key type="s" name="source">
+      <default>''</default>
+      <summary>Last source</summary>
+      <description>Name of the last playing source if any.</description>
+    </key>
   </schema>
 </schemalist>

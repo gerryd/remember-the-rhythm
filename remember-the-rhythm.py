@@ -3,11 +3,14 @@
 
 from gi.repository import GObject
 from gi.repository import Peas
+from gi.repository import PeasGtk
 from gi.repository import RB
 from gi.repository import Gio
 from gi.repository import GLib
-from gi.repository.GLib import Variant
+from gi.repository import Gtk
 
+from gi.repository.GLib import Variant
+import rb
 
 GSETTINGS_KEY = "org.gnome.rhythmbox.plugins.remember-the-rhythm"
 KEY_PLAYBACK_TIME = 'playback-time'
@@ -15,9 +18,10 @@ KEY_LOCATION = 'last-entry-location'
 KEY_PLAYLIST = 'playlist'
 KEY_BROWSER_VALUES = 'browser-values'
 KEY_PLAY_STATE = 'play-state'
+KEY_SOURCE = 'source'
+KEY_STARTUP_STATE = 'startup-state'
 
 class RememberTheRhythm(GObject.Object, Peas.Activatable):
-
     __gtype_name = 'RememberTheRhythm'
     object = GObject.property(type=GObject.Object)
 
@@ -33,6 +37,8 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.browser_values_list = self.settings.get_value(KEY_BROWSER_VALUES)
         self.play_state = self.settings.get_boolean(KEY_PLAY_STATE)
         self.source = None
+        self.source_name = self.settings.get_string(KEY_SOURCE)
+        self.startup_state = self.settings.get_uint(KEY_STARTUP_STATE)
 
     def do_activate(self):
         self.shell = self.object
@@ -47,7 +53,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.shell_player.connect('elapsed-changed', self.elapsed_changed)
 
     def do_deactivate(self):
-        #self.save_rhythm()
+        # self.save_rhythm()
         self.first_run = True
 
     def try_load(self, *args, **kwargs):
@@ -57,7 +63,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.load_complete()
 
     def load_complete(self, *args, **kwargs):
-        print ("DEBUG - load_complete")
+        print("DEBUG - load_complete")
         if self.location:
             entry = self.db.entry_lookup_by_location(self.location)
             if self.playlist:
@@ -71,22 +77,24 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.shell_player.set_playing_source(self.source)
             self.shell_player.set_selected_source(self.source)
 
-            #self.shell_player.set_mute(False)
+            # self.shell_player.set_mute(False)
+
             self.shell_player.play_entry(entry, self.source)
 
             time = self.playback_time
 
             def pause(time):
-                print (self.shell_player.set_playing_time(time))
+                print(self.shell_player.set_playing_time(time))
                 self.shell_player.pause()
-                #self.shell_player.set_mute(True)
+                # self.shell_player.set_mute(True)
 
                 return False
 
-            if not self.play_state:
+            print(self.startup_state)
+            if (not self.play_state and self.startup_state == 1) or self.startup_state == 2:
                 GLib.timeout_add_seconds(1, pause, time)
-            #else:
-                #self.shell_player.set_mute(False)
+                # else:
+                # self.shell_player.set_mute(False)
 
             self.first_run = True
 
@@ -95,12 +103,15 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.source = source
             if self.source in self.playlist_manager.get_playlists():
                 self.settings.set_string('playlist', self.source.props.name)
+                self.settings.set_string('source', '')
             else:
                 self.settings.set_string('playlist', '')
+                self.settings.set_string('source', self.source.props.name)
+                self.source_name = self.source.props.name
 
     def playing_changed(self, player, playing, data=None):
 
-        print ("DEBUG-playing_changed")
+        print("DEBUG-playing_changed")
         if self.first_run:
             self.on_first_run()
             GObject.idle_add(self.init_source)
@@ -117,7 +128,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.location = ""
 
         GObject.idle_add(self.save_rhythm, 0)
-
 
     def elapsed_changed(self, player, entry, data=None):
         if self.first_run:
@@ -167,9 +177,70 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
     def save_rhythm(self, pb_time=None):
         if self.location:
-            pb_time = pb_time == None and self.playback_time or pb_time==None
+            pb_time = pb_time is None and self.playback_time or pb_time is None
             self.settings.set_uint(KEY_PLAYBACK_TIME, pb_time)
             self.settings.set_string(KEY_LOCATION, self.location)
         self.settings.set_boolean(KEY_PLAY_STATE, self.play_state)
 
         GObject.idle_add(self.get_source_data)
+
+
+class RememberPreferences(GObject.Object, PeasGtk.Configurable):
+    """
+    Preferences for the Plugins. It holds the settings for
+    the plugin and also is the responsible of creating the preferences dialog.
+    """
+    __gtype_name__ = 'RememberPreferences'
+    object = GObject.property(type=GObject.Object)
+
+    def __init__(self):
+        """
+        Initialises the preferences, getting an instance of the settings saved
+        by Gio.
+        """
+        GObject.Object.__init__(self)
+        self.settings = Gio.Settings.new(GSETTINGS_KEY)
+
+    def do_create_configure_widget(self):
+        """
+        Creates the plugin's preferences dialog
+        """
+        print("DEBUG - create_display_contents")
+        # create the ui
+        self._first_run = True
+
+        builder = Gtk.Builder()
+        builder.add_from_file(rb.find_plugin_file(self,
+                                                  'ui/remember_preferences.ui'))
+        builder.connect_signals(self)
+
+        # bind the toggles to the settings
+        self._playpause_rb = builder.get_object('play_pause_radiobutton')
+        self._play_rb = builder.get_object('play_radiobutton')
+        self._pause_rb = builder.get_object('pause_radiobutton')
+
+        startup_state = self.settings[KEY_STARTUP_STATE]
+
+        if startup_state == 1:
+            self._playpause_rb.set_active(True)
+        elif startup_state == 2:
+            self._pause_rb.set_active(True)
+        else:
+            self._play_rb.set_active(True)
+
+        self._first_run = False
+
+        return builder.get_object('remember_box')
+
+    def on_startup_toggled(self, toggle_button):
+        if self._first_run:
+            return
+
+        if toggle_button == self._play_rb:
+            startup_state = 3
+        elif toggle_button == self._pause_rb:
+            startup_state = 2
+        else:
+            startup_state = 1
+
+        self.settings[KEY_STARTUP_STATE] = startup_state
