@@ -50,3 +50,5 @@ Remove
 ::
 
      sudo make uninstall
+
+Note: This is a fork from the original project which appears to have been abandoned.  I've requested an update from the original maintainer but to-date no answer has been forthcoming.
