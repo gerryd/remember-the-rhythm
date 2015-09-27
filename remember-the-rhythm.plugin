@@ -2,6 +2,7 @@
 Loader=python3
 Module=remember-the-rhythm
 IAge=2
+Depends=rb
 Name=Remember the Rhythm
 Description=Remembers last playing song + playback time and resumes on next start
 Authors=fossfreedom <foss.freedom@gmail.com> Owais Lone <hello@owaislone.org>
