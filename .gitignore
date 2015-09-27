@@ -6,6 +6,7 @@
 dist
 build
 eggs
+*.*~
 parts
 .idea/
 bin
