@@ -1,13 +1,14 @@
-PLUGIN_PATH=/usr/lib/rhythmbox/plugins/remember-the-rhythm/
-DATA_PATH=/usr/share/rhythmbox/plugins/remember-the-rhythm/
-SCHEMA_PATH=/usr/share/glib-2.0/schemas/
+DESTDIR=
+SUBDIR=/usr/lib/rhythmbox/plugins/remember-the-rhythm/
+DATADIR=/usr/share/rhythmbox/plugins/remember-the-rhythm/
+GLIB_DIR=/usr/share/glib-2.0/schemas/
 
 build:
 
 install:
-	install -d $(PLUGIN_PATH)
-	install -m 644 remember* $(PLUGIN_PATH)
-	install -d $(DATA_PATH)/ui
-	install -m 644 ui/* $(DATA_PATH)/ui
-	install -d $(SCHEMA_PATH)
-	install -m 644 schemas/org.gnome.rhythmbox.plugins.remember-the-rhythm.gschema.xml $(SCHEMA_PATH)
+	install -d $(DESTDIR)$(SUBDIR)
+	install -m 644 remember* $(DESTDIR)$(SUBDIR)
+	install -d $(DESTDIR)$(DATADIR)/ui
+	install -m 644 ui/* $(DESTDIR)$(DATADIR)/ui
+	install -d $(DESTDIR)$(GLIB_DIR)
+	install -m 644 schemas/org.gnome.rhythmbox.plugins.remember-the-rhythm.gschema.xml $(DESTDIR)$(GLIB_DIR)
