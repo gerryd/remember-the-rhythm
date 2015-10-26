@@ -66,6 +66,11 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         print("DEBUG - load_complete")
         if self.location:
             entry = self.db.entry_lookup_by_location(self.location)
+            print (self.location)
+            if not entry:
+                self.first_run = True
+                return
+                
             if self.playlist:
                 playlists = self.playlist_manager.get_playlists()
                 for playlist in playlists:
@@ -73,12 +78,16 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                         self.source = playlist
                         break
             if not self.source:
+                print (self.location)
                 self.source = self.shell.guess_source_for_uri(self.location)
+                
             self.shell_player.set_playing_source(self.source)
             self.shell_player.set_selected_source(self.source)
 
             # self.shell_player.set_mute(False)
 
+            print (entry)
+            print (self.source)
             self.shell_player.play_entry(entry, self.source)
 
             time = self.playback_time

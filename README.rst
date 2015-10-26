@@ -31,7 +31,9 @@ Installation
 Ubuntu Repository
 ~~~~~~~~~~~~~~~~~~
 
-TBA
+sudo add-apt-repository ppa:fossfreedom/rhythmbox-plugins
+sudo apt-get update
+sudo apt-get install rhythmbox-plugin-remember-the-rhythm
 
 
 From Source
@@ -42,13 +44,13 @@ Install:
 
 ::
 
-    sudo make install
+    ./install.sh
 
 Remove
 ```````
 
 ::
 
-     sudo make uninstall
+     ./install.sh --uninstall
 
 Note: This is a fork from the original project which appears to have been abandoned.  I've requested an update from the original maintainer but to-date no answer has been forthcoming.
