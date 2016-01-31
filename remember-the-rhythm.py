@@ -127,23 +127,26 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
             if self._scenario == 3:
                 # now pause if the preferences options calls for this.
+                print (self.play_state)
+                print (self.startup_state)
                 if (not self.play_state and self.startup_state == 1) or \
                                 self.startup_state == 2:
+                    print ("pausing")
                     self.shell_player.pause()
+                    # note for radio streams rhythmbox doesnt pause - it can only stop
+                    # so basically nothing we can do - just let the stream play
                     self._scenario += 1
                     return True
 
             self._scenario = 4
             # for the playing entry attempt to move to the remembered time
-            #try:
-            #    self.shell_player.set_playing_time(time)
-
-            #except:
+            try:
+                self.shell_player.set_playing_time(time)
+            except:
                 # fallthrough ... some streams - radio - cannot seek
-            #    pass
+                pass
 
             # unmute and end the thread
-
             #p = subprocess.Popen(['amixer set Master unmute > /dev/null'], shell=True, stdout=subprocess.PIPE)
             return False
 
@@ -162,7 +165,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         :return:
         """
         print ("DEBUG-playing source changed")
-        if not self.first_run:
+        if self._scenario != 4:
             return
 
         if source:
@@ -197,10 +200,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 # self.shell_player.jump_to_current()
 
         print("DEBUG-playing_changed")
-        if not self.first_run:
-            print ("first run")
-            #self.on_first_run()
-            #GObject.idle_add(init_source)
+        if self._scenario != 4:
             return
 
         entry = self.shell_player.get_playing_entry()
@@ -218,6 +218,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
         GLib.idle_add(self.save_rhythm, 0)
 
+
     def elapsed_changed(self, player, entry, data=None):
         """
         called when something is playing - remembers the time within a track
@@ -227,13 +228,11 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         :return:
         """
         if not self.first_run:
-        #    self.on_first_run()
             return
 
         if self._scenario != 4:
             try:
                 self.shell_player.set_playing_time(self.playback_time)
-                return
             except:
                 pass
 
@@ -253,16 +252,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         except:
             pass
 
-    # def on_first_run(self):
-    #     """
-    #     called by various "play" signals above - sets the playing time of the shell-player
-    #     :return:
-    #     """
-    #     try:
-    #         self.shell_player.set_playing_time(self.playback_time)
-    #         self.first_run = False
-    #     except:
-    #         pass
 
     def save_rhythm(self, pb_time=None):
         """
@@ -277,7 +266,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             #print ("last location %s" % self.location)
         self.settings.set_boolean(KEY_PLAY_STATE, self.play_state)
 
-        #def get_source_data():
         if self.source:
             views = self.source.get_property_views()
             browser_values_list = []
@@ -286,7 +274,6 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             self.browser_values_list = Variant('aas', browser_values_list)
             self.settings.set_value(KEY_BROWSER_VALUES, self.browser_values_list)
 
-        #GObject.idle_add(get_source_data)
 
     def _import(self):
         """
