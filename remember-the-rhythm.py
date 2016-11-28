@@ -74,6 +74,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
         print("DEBUG - load_complete")
         if not self.location:
+            self._scenario = 4
             self.first_run = True
             self._connect_signals()
             return
