@@ -9,7 +9,9 @@ from gi.repository import GLib
 
 from gi.repository.GLib import Variant
 from remember_prefs import RememberPreferences
-import subprocess
+
+import logging
+import sys
 
 GSETTINGS_KEY = "org.gnome.rhythmbox.plugins.remember-the-rhythm"
 KEY_PLAYBACK_TIME = 'playback-time'
@@ -20,6 +22,8 @@ KEY_PLAY_STATE = 'play-state'
 KEY_SOURCE = 'source'
 KEY_STARTUP_STATE = 'startup-state'
 
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logger = logging.getLogger("remember-the-rhythm")
 
 class RememberTheRhythm(GObject.Object, Peas.Activatable):
     __gtype_name = 'RememberTheRhythm'
@@ -40,7 +44,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.startup_state = self.settings.get_uint(KEY_STARTUP_STATE)
 
     def do_activate(self):
-        print ("DEBUG-do_activate")
+        logger.debug("do_activate")
         self.shell = self.object
         self.library = self.shell.props.library_source
         self.shell_player = self.shell.props.shell_player
@@ -72,7 +76,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         :return:
         """
 
-        print("DEBUG - load_complete")
+        logger.debug("load_complete")
         if not self.location:
             self._scenario = 4
             self.first_run = True
@@ -80,7 +84,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             return
 
         entry = self.db.entry_lookup_by_location(self.location)
-        print (self.location)
+        logger.debug(self.location)
         if not entry:
             self.first_run = True
             self._connect_signals()
@@ -95,7 +99,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
         # now switch to the correct source to play the remembered entry
         if not self.source:
-            print (self.location)
+            logger.debug(self.location)
             self.source = self.shell.guess_source_for_uri(self.location)
 
         self.shell_player.set_playing_source(self.source)
@@ -106,7 +110,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         time = self.playback_time
 
         def scenarios():
-            print ("scenario %d" % self._scenario)
+            logger.debug("scenario %d" % self._scenario)
 
             if self._scenario == 1:
                 # always mute the sound - this helps with the pause scenario
@@ -119,8 +123,8 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
             if self._scenario == 2:
                 # play the entry for the source chosen
-                print (entry)
-                print (self.source)
+                logger.debug(entry)
+                logger.debug(self.source)
                 self.shell_player.play_entry(entry, self.source)
                 #self.shell_player.set_playing_time(time)
                 self._scenario += 1
@@ -128,11 +132,11 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
 
             if self._scenario == 3:
                 # now pause if the preferences options calls for this.
-                print (self.play_state)
-                print (self.startup_state)
+                logger.debug(self.play_state)
+                logger.debug(self.startup_state)
                 if (not self.play_state and self.startup_state == 1) or \
                                 self.startup_state == 2:
-                    print ("pausing")
+                    logger.debug("pausing")
                     self.shell_player.pause()
                     # note for radio streams rhythmbox doesnt pause - it can only stop
                     # so basically nothing we can do - just let the stream play
@@ -165,7 +169,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         :param data:
         :return:
         """
-        print ("DEBUG-playing source changed")
+        logger.debug("playing source changed")
         if self._scenario != 4:
             return
 
@@ -189,7 +193,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         """
 
         def init_source():
-            print ("init source")
+            logger.debug("init source")
             if self.source:
                 views = self.source.get_property_views()
                 for i, view in enumerate(views):
@@ -200,20 +204,20 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 self.shell.props.display_page_tree.select(self.source)
                 # self.shell_player.jump_to_current()
 
-        print("DEBUG-playing_changed")
+        logger.debug("playing_changed")
         if self._scenario != 4:
             return
 
         entry = self.shell_player.get_playing_entry()
 
         if entry:
-            print ("found entry")
+            logger.debug("found entry")
             success, self.play_state = self.shell_player.get_playing()
 
             self.location = entry.get_string(RB.RhythmDBPropType.LOCATION)
-            print (self.location)
+            logger.debug(self.location)
         else:
-            print ("not found entry")
+            logger.debug("not found entry")
             self.play_state = False
             self.location = ""
 
@@ -264,7 +268,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             pb_time = pb_time is None and self.playback_time or pb_time is None
             self.settings.set_uint(KEY_PLAYBACK_TIME, pb_time)
             self.settings.set_string(KEY_LOCATION, self.location)
-            #print ("last location %s" % self.location)
+            logger.debug("last location %s" % self.location)
         self.settings.set_boolean(KEY_PLAY_STATE, self.play_state)
 
         if self.source:
