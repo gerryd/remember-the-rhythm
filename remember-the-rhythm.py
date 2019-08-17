@@ -51,6 +51,8 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
         self.playlist_manager = self.shell.props.playlist_manager
         self.db = self.shell.props.db
         self.backend_player = self.shell_player.props.player
+        self.startup_volume = self.shell_player.get_volume()[1]
+        logger.debug("saved startup volume as %f" % self.startup_volume)
 
         def try_load(*args):
             if len(self.playlist_manager.get_playlists()) == 0:
@@ -118,6 +120,8 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 # we dont want to here what is playing
 
                 #p = subprocess.Popen(['amixer set Master mute > /dev/null'], shell=True, stdout=subprocess.PIPE)
+                logger.debug("setting volume to zero")
+                self.shell_player.set_volume(0.0)
                 self._scenario += 1
                 return True
 
@@ -152,6 +156,8 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
                 pass
 
             # unmute and end the thread
+            logger.debug("setting volume to %f" % self.startup_volume)
+            self.shell_player.set_volume(self.startup_volume)
             #p = subprocess.Popen(['amixer set Master unmute > /dev/null'], shell=True, stdout=subprocess.PIPE)
             return False
 
@@ -268,7 +274,7 @@ class RememberTheRhythm(GObject.Object, Peas.Activatable):
             pb_time = pb_time is None and self.playback_time or pb_time is None
             self.settings.set_uint(KEY_PLAYBACK_TIME, pb_time)
             self.settings.set_string(KEY_LOCATION, self.location)
-            logger.debug("last location %s" % self.location)
+            #logger.debug("last location %s" % self.location)
         self.settings.set_boolean(KEY_PLAY_STATE, self.play_state)
 
         if self.source:
